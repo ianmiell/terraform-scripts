@@ -56,9 +56,6 @@ resource "aws_route_table_association" "public_subnet_us_east_1a_association" {
   route_table_id = "${aws_vpc.vpc_tuto.main_route_table_id}"
 }
 
-
-
-
 resource "aws_ecs_cluster" "tfcluster1" {
   name = "tfcluster1"
 }
@@ -118,18 +115,24 @@ resource "aws_iam_instance_profile" "ecs_profile_1" {
   role = "${aws_iam_role.ecsInstanceRole2.name}"
 }
 
+resource "aws_iam_policy_attachment" "AmazonEC2ContainerServiceforEC2Role-policy-attachment" {
+    name       = "AmazonEC2ContainerServiceforEC2Role-policy-attachment"
+    policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonEC2ContainerServiceforEC2Role"
+    groups     = []
+    users      = []
+    roles      = ["ecsInstanceRole2"]
+}
+
 resource "aws_security_group" "ecs_security_group" {
     name        = "ecs_security_group"
     description = "default ECS security group"
     vpc_id      = "${aws_vpc.vpc_tuto.id}"
-
     ingress {
         from_port       = 0
         to_port         = 0
         protocol        = "-1"
         cidr_blocks     = ["0.0.0.0/0"]
     }
-
     egress {
         from_port       = 0
         to_port         = 0
@@ -137,7 +140,6 @@ resource "aws_security_group" "ecs_security_group" {
         cidr_blocks     = ["0.0.0.0/0"]
     }
 }
-
 
 resource "aws_instance" "ecs_ec2_host_1" {
     ami                         = "ami-0349a96f1f1841c30"
@@ -150,22 +152,16 @@ resource "aws_instance" "ecs_ec2_host_1" {
     associate_public_ip_address = true
     source_dest_check           = true
     iam_instance_profile        = "${aws_iam_instance_profile.ecs_profile_1.id}"
-
     root_block_device {
         volume_type           = "gp2"
         volume_size           = 8
         delete_on_termination = true
     }
-
     ebs_block_device {
         device_name           = "/dev/xvdcz"
         volume_type           = "gp2"
         volume_size           = 22
         delete_on_termination = true
     }
-
-    tags {
-    }
+    tags {}
 }
-
-
