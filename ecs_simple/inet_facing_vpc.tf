@@ -17,6 +17,25 @@ resource "aws_vpc" "vpc_tuto" {
   }
 }
 
+
+resource "aws_security_group" "ecs_security_group" {
+    name        = "ecs_security_group"
+    description = "default ECS security group"
+    vpc_id      = "${aws_vpc.vpc_tuto.id}"
+    ingress {
+        from_port       = 0
+        to_port         = 0
+        protocol        = "-1"
+        cidr_blocks     = ["0.0.0.0/0"]
+    }
+    egress {
+        from_port       = 0
+        to_port         = 0
+        protocol        = "-1"
+        cidr_blocks     = ["0.0.0.0/0"]
+    }
+}
+
 resource "aws_subnet" "public_subnet_us_east_1a" {
   vpc_id = "${aws_vpc.vpc_tuto.id}"
   cidr_block = "172.31.1.0/24"
@@ -121,25 +140,9 @@ resource "aws_iam_policy_attachment" "AmazonEC2ContainerServiceforEC2Role-policy
     groups     = []
     users      = []
     roles      = ["ecsInstanceRole2"]
+    depends_on = ["aws_iam_role.ecsInstanceRole2"]
 }
 
-resource "aws_security_group" "ecs_security_group" {
-    name        = "ecs_security_group"
-    description = "default ECS security group"
-    vpc_id      = "${aws_vpc.vpc_tuto.id}"
-    ingress {
-        from_port       = 0
-        to_port         = 0
-        protocol        = "-1"
-        cidr_blocks     = ["0.0.0.0/0"]
-    }
-    egress {
-        from_port       = 0
-        to_port         = 0
-        protocol        = "-1"
-        cidr_blocks     = ["0.0.0.0/0"]
-    }
-}
 
 resource "aws_instance" "ecs_ec2_host_1" {
     ami                         = "ami-0349a96f1f1841c30"
@@ -164,4 +167,8 @@ resource "aws_instance" "ecs_ec2_host_1" {
         delete_on_termination = true
     }
     tags {}
+    user_data = <<USER_DATA
+#!/bin/bash
+echo "ECS_CLUSTER=tfcluster1" >> /etc/ecs/ecs.config
+USER_DATA
 }
