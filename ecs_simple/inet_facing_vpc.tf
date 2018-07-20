@@ -93,7 +93,6 @@ resource "aws_ecs_service" "nginx" {
 # EC2 instance
 
 # IAM role for EC2 instances
-# TODO apply the role to the ec2 instance
 resource "aws_iam_role" "ecsInstanceRole2" {
     name               = "ecsInstanceRole2"
     path               = "/"
@@ -118,8 +117,6 @@ resource "aws_iam_instance_profile" "ecs_profile_1" {
   name = "ec2_profile_1"
   role = "${aws_iam_role.ecsInstanceRole2.name}"
 }
-
-# TODO - extract security group
 
 resource "aws_security_group" "ecs_security_group" {
     name        = "ecs_security_group"
