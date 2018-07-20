@@ -1,3 +1,6 @@
+# TODO create a specific ecr
+# TODO create iam_role for containers
+
 provider "aws" {
   region                  = "us-east-1"
 #  shared_credentials_file = "/Users/miellian/.aws/credentials"
@@ -53,9 +56,8 @@ resource "aws_route_table_association" "public_subnet_us_east_1a_association" {
   route_table_id = "${aws_vpc.vpc_tuto.main_route_table_id}"
 }
 
-# TODO create a specific ecr
-# TODO create iam_role for tasks
-# TODO create iam_role for containers
+
+
 
 resource "aws_ecs_cluster" "tfcluster1" {
   name = "tfcluster1"
@@ -85,3 +87,88 @@ resource "aws_ecs_service" "nginx" {
   #iam_role        = "${aws_iam_role.foo.arn}"
   #depends_on      = ["aws_iam_role_policy.foo"]
 }
+
+
+
+# EC2 instance
+
+# IAM role for EC2 instances
+# TODO apply the role to the ec2 instance
+resource "aws_iam_role" "ecsInstanceRole2" {
+    name               = "ecsInstanceRole2"
+    path               = "/"
+    assume_role_policy = <<POLICY
+{
+  "Version": "2008-10-17",
+  "Statement": [
+    {
+      "Sid": "",
+      "Effect": "Allow",
+      "Principal": {
+        "Service": "ec2.amazonaws.com"
+      },
+      "Action": "sts:AssumeRole"
+    }
+  ]
+}
+POLICY
+}
+
+resource "aws_iam_instance_profile" "ecs_profile_1" {
+  name = "ec2_profile_1"
+  role = "${aws_iam_role.ecsInstanceRole2.name}"
+}
+
+# TODO - extract security group
+
+resource "aws_security_group" "ecs_security_group" {
+    name        = "ecs_security_group"
+    description = "default ECS security group"
+    vpc_id      = "${aws_vpc.vpc_tuto.id}"
+
+    ingress {
+        from_port       = 0
+        to_port         = 0
+        protocol        = "-1"
+        cidr_blocks     = ["0.0.0.0/0"]
+    }
+
+    egress {
+        from_port       = 0
+        to_port         = 0
+        protocol        = "-1"
+        cidr_blocks     = ["0.0.0.0/0"]
+    }
+}
+
+
+resource "aws_instance" "ecs_ec2_host_1" {
+    ami                         = "ami-0349a96f1f1841c30"
+    availability_zone           = "us-east-1a"
+    ebs_optimized               = false
+    instance_type               = "t2.micro"
+    monitoring                  = false
+    subnet_id                   = "${aws_subnet.public_subnet_us_east_1a.id}"
+    vpc_security_group_ids      = ["${aws_security_group.ecs_security_group.id}"]
+    associate_public_ip_address = true
+    source_dest_check           = true
+    iam_instance_profile        = "${aws_iam_instance_profile.ecs_profile_1.id}"
+
+    root_block_device {
+        volume_type           = "gp2"
+        volume_size           = 8
+        delete_on_termination = true
+    }
+
+    ebs_block_device {
+        device_name           = "/dev/xvdcz"
+        volume_type           = "gp2"
+        volume_size           = 22
+        delete_on_termination = true
+    }
+
+    tags {
+    }
+}
+
+
