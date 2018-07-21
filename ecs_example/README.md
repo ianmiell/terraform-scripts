@@ -19,3 +19,7 @@ It:
 - Creates EC2 instance profile
 - Attaches ECS EC2 policy to ECS IAM role for EC2
 - Creates EC2 instance in ECS cluster
+
+Files:
+
+

@@ -1,5 +1,5 @@
-# TODO create a specific ecr
-# TODO create iam_role for containers
+# TODO create a specific ecr?
+# TODO create iam_role for tasks?
 
 provider "aws" {
   region                  = "us-east-1"
@@ -8,12 +8,12 @@ provider "aws" {
 
 # Based on inet-facing-simple, but just a public subnet
 
-resource "aws_vpc" "vpc_tuto" {
-  cidr_block = "172.31.0.0/16"
-  enable_dns_support = true
+resource "aws_vpc" "vpc_ecs_cluster" {
+  cidr_block = "${var.vpc_cidr_range}"
+  enable_dns_support   = true
   enable_dns_hostnames = true
   tags = {
-    Name = "TestVPC"
+    Name = "${var.vpc_name}"
   }
 }
 
@@ -21,7 +21,7 @@ resource "aws_vpc" "vpc_tuto" {
 resource "aws_security_group" "ecs_security_group" {
     name        = "ecs_security_group"
     description = "default ECS security group"
-    vpc_id      = "${aws_vpc.vpc_tuto.id}"
+    vpc_id      = "${aws_vpc.vpc_ecs_cluster.id}"
     ingress {
         from_port       = 0
         to_port         = 0
@@ -36,9 +36,9 @@ resource "aws_security_group" "ecs_security_group" {
     }
 }
 
-resource "aws_subnet" "public_subnet_us_east_1a" {
-  vpc_id = "${aws_vpc.vpc_tuto.id}"
-  cidr_block = "172.31.1.0/24"
+resource "aws_subnet" "ecs_public_subnet" {
+  vpc_id = "${aws_vpc.vpc_ecs_cluster.id}"
+  cidr_block = "${var.subnet_cidr_range}"
   map_public_ip_on_launch = true
   availability_zone = "us-east-1a"
   tags = {
@@ -47,32 +47,32 @@ resource "aws_subnet" "public_subnet_us_east_1a" {
 }
 
 resource "aws_internet_gateway" "gw" {
-  vpc_id = "${aws_vpc.vpc_tuto.id}"
+  vpc_id = "${aws_vpc.vpc_ecs_cluster.id}"
   tags = {
     Name = "IG"
   }
 }
 
 resource "aws_route" "internet_access" {
-  route_table_id = "${aws_vpc.vpc_tuto.main_route_table_id}"
+  route_table_id = "${aws_vpc.vpc_ecs_cluster.main_route_table_id}"
   destination_cidr_block = "0.0.0.0/0"
   gateway_id = "${aws_internet_gateway.gw.id}"
 }
 
-resource "aws_eip" "tuto_eip" {
+resource "aws_eip" "ecs_cluster_eip" {
   vpc = true
   depends_on = ["aws_internet_gateway.gw"]
 }
 
 resource "aws_nat_gateway" "nat" {
-  allocation_id = "${aws_eip.tuto_eip.id}"
-  subnet_id = "${aws_subnet.public_subnet_us_east_1a.id}"
+  allocation_id = "${aws_eip.ecs_cluster_eip.id}"
+  subnet_id = "${aws_subnet.ecs_public_subnet.id}"
   depends_on = ["aws_internet_gateway.gw"]
 }
 
-resource "aws_route_table_association" "public_subnet_us_east_1a_association" {
-  subnet_id = "${aws_subnet.public_subnet_us_east_1a.id}"
-  route_table_id = "${aws_vpc.vpc_tuto.main_route_table_id}"
+resource "aws_route_table_association" "ecs_public_subnet_association" {
+  subnet_id = "${aws_subnet.ecs_public_subnet.id}"
+  route_table_id = "${aws_vpc.vpc_ecs_cluster.main_route_table_id}"
 }
 
 resource "aws_ecs_cluster" "tfcluster1" {
@@ -100,17 +100,14 @@ resource "aws_ecs_service" "nginx" {
   cluster         = "${aws_ecs_cluster.tfcluster1.id}"
   task_definition = "${aws_ecs_task_definition.mytask.arn}"
   desired_count   = 1
-  #iam_role        = "${aws_iam_role.foo.arn}"
-  #depends_on      = ["aws_iam_role_policy.foo"]
 }
 
 
 
 # EC2 instance
-
 # IAM role for EC2 instances
-resource "aws_iam_role" "ecsInstanceRole2" {
-    name               = "ecsInstanceRole2"
+resource "aws_iam_role" "ecsInstanceRole" {
+    name               = "ecsInstanceRole"
     path               = "/"
     assume_role_policy = <<POLICY
 {
@@ -131,7 +128,7 @@ POLICY
 
 resource "aws_iam_instance_profile" "ecs_profile_1" {
   name = "ec2_profile_1"
-  role = "${aws_iam_role.ecsInstanceRole2.name}"
+  role = "${aws_iam_role.ecsInstanceRole.name}"
 }
 
 resource "aws_iam_policy_attachment" "AmazonEC2ContainerServiceforEC2Role-policy-attachment" {
@@ -139,8 +136,8 @@ resource "aws_iam_policy_attachment" "AmazonEC2ContainerServiceforEC2Role-policy
     policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonEC2ContainerServiceforEC2Role"
     groups     = []
     users      = []
-    roles      = ["ecsInstanceRole2"]
-    depends_on = ["aws_iam_role.ecsInstanceRole2"]
+    roles      = ["ecsInstanceRole"]
+    depends_on = ["aws_iam_role.ecsInstanceRole"]
 }
 
 
@@ -150,7 +147,7 @@ resource "aws_instance" "ecs_ec2_host_1" {
     ebs_optimized               = false
     instance_type               = "t2.micro"
     monitoring                  = false
-    subnet_id                   = "${aws_subnet.public_subnet_us_east_1a.id}"
+    subnet_id                   = "${aws_subnet.ecs_public_subnet.id}"
     vpc_security_group_ids      = ["${aws_security_group.ecs_security_group.id}"]
     associate_public_ip_address = true
     source_dest_check           = true
