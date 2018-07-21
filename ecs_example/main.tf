@@ -2,8 +2,7 @@
 # TODO create iam_role for tasks?
 
 provider "aws" {
-  region                  = "us-east-1"
-#  shared_credentials_file = "/Users/miellian/.aws/credentials"
+  region                  = "${var.ecs_region}"
 }
 
 # Based on inet-facing-simple, but just a public subnet
@@ -40,34 +39,34 @@ resource "aws_subnet" "ecs_public_subnet" {
   vpc_id = "${aws_vpc.vpc_ecs_cluster.id}"
   cidr_block = "${var.subnet_cidr_range}"
   map_public_ip_on_launch = true
-  availability_zone = "us-east-1a"
+  availability_zone = "${var.ecs_az_1}"
   tags = {
-    Name = "subnet UE1a"
+    Name = "${var.ecs_public_subnet_name}"
   }
 }
 
-resource "aws_internet_gateway" "gw" {
+resource "aws_internet_gateway" "ecs_igw" {
   vpc_id = "${aws_vpc.vpc_ecs_cluster.id}"
   tags = {
-    Name = "IG"
+    Name = "${var.ecs_igw_name}"
   }
 }
 
 resource "aws_route" "internet_access" {
   route_table_id = "${aws_vpc.vpc_ecs_cluster.main_route_table_id}"
   destination_cidr_block = "0.0.0.0/0"
-  gateway_id = "${aws_internet_gateway.gw.id}"
+  gateway_id = "${aws_internet_gateway.ecs_igw.id}"
 }
 
 resource "aws_eip" "ecs_cluster_eip" {
   vpc = true
-  depends_on = ["aws_internet_gateway.gw"]
+  depends_on = ["aws_internet_gateway.ecs_igw"]
 }
 
 resource "aws_nat_gateway" "nat" {
   allocation_id = "${aws_eip.ecs_cluster_eip.id}"
   subnet_id = "${aws_subnet.ecs_public_subnet.id}"
-  depends_on = ["aws_internet_gateway.gw"]
+  depends_on = ["aws_internet_gateway.ecs_igw"]
 }
 
 resource "aws_route_table_association" "ecs_public_subnet_association" {
@@ -75,34 +74,21 @@ resource "aws_route_table_association" "ecs_public_subnet_association" {
   route_table_id = "${aws_vpc.vpc_ecs_cluster.main_route_table_id}"
 }
 
-resource "aws_ecs_cluster" "tfcluster1" {
-  name = "tfcluster1"
+resource "aws_ecs_cluster" "tfcluster" {
+  name = "${var.ecs_cluster_name}"
 }
 
-# TODO look at adding volumes and placement constraints
 resource "aws_ecs_task_definition" "mytask" {
   family                = "mytask"
   container_definitions = "${file("task-definitions/mytask.json")}"
-
-  #volume {
-  #  name      = "service-storage"
-  #  host_path = "/ecs/service-storage"
-  #}
-
-  #placement_constraints {
-  #  type       = "memberOf"
-  #  expression = "attribute:ecs.availability-zone in [us-west-2a, us-west-2b]"
-  #}
 }
 
 resource "aws_ecs_service" "nginx" {
   name            = "nginx"
-  cluster         = "${aws_ecs_cluster.tfcluster1.id}"
+  cluster         = "${aws_ecs_cluster.tfcluster.id}"
   task_definition = "${aws_ecs_task_definition.mytask.arn}"
   desired_count   = 1
 }
-
-
 
 # EC2 instance
 # IAM role for EC2 instances
@@ -142,10 +128,10 @@ resource "aws_iam_policy_attachment" "AmazonEC2ContainerServiceforEC2Role-policy
 
 
 resource "aws_instance" "ecs_ec2_host_1" {
-    ami                         = "ami-0349a96f1f1841c30"
-    availability_zone           = "us-east-1a"
+    ami                         = "${var.ecs_ec2_ami}"
+    availability_zone           = "${var.ecs_az_1}"
     ebs_optimized               = false
-    instance_type               = "t2.micro"
+    instance_type               = "${var.ec2_instance_type}"
     monitoring                  = false
     subnet_id                   = "${aws_subnet.ecs_public_subnet.id}"
     vpc_security_group_ids      = ["${aws_security_group.ecs_security_group.id}"]
@@ -166,6 +152,6 @@ resource "aws_instance" "ecs_ec2_host_1" {
     tags {}
     user_data = <<USER_DATA
 #!/bin/bash
-echo "ECS_CLUSTER=tfcluster1" >> /etc/ecs/ecs.config
+echo "ECS_CLUSTER=${aws_ecs_cluster.tfcluster.name}" >> /etc/ecs/ecs.config
 USER_DATA
 }
