@@ -30,12 +30,12 @@ variable "ecs_igw_name" {
 
 variable "ecs_az_1" {
     type = "string"
-    default = "us-east-1"
+    default = "us-east-1a"
 }
 
 variable "ecs_region" {
     type = "string"
-    default = "us-east"
+    default = "us-east-1"
 }
 
 variable "ecs_ec2_ami" {
@@ -46,4 +46,9 @@ variable "ecs_ec2_ami" {
 variable "ec2_instance_type" {
     type = "string"
     default = "t2.micro"
+}
+
+variable "ec2_keypair_name" {
+    type = "string"
+    default = "20180622mac"
 }

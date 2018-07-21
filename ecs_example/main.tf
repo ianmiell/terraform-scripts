@@ -93,7 +93,7 @@ resource "aws_ecs_service" "nginx" {
 # EC2 instance
 # IAM role for EC2 instances
 resource "aws_iam_role" "ecsInstanceRole" {
-    name               = "ecsInstanceRole"
+    name               = "ecs_instance_role"
     path               = "/"
     assume_role_policy = <<POLICY
 {
@@ -122,7 +122,7 @@ resource "aws_iam_policy_attachment" "AmazonEC2ContainerServiceforEC2Role-policy
     policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonEC2ContainerServiceforEC2Role"
     groups     = []
     users      = []
-    roles      = ["ecsInstanceRole"]
+    roles      = ["${aws_iam_role.ecsInstanceRole.name}"]
     depends_on = ["aws_iam_role.ecsInstanceRole"]
 }
 
@@ -134,6 +134,7 @@ resource "aws_instance" "ecs_ec2_host_1" {
     instance_type               = "${var.ec2_instance_type}"
     monitoring                  = false
     subnet_id                   = "${aws_subnet.ecs_public_subnet.id}"
+    key_pair_name               = "${var.ec2_key_pair_name}"
     vpc_security_group_ids      = ["${aws_security_group.ecs_security_group.id}"]
     associate_public_ip_address = true
     source_dest_check           = true
