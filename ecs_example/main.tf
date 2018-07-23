@@ -80,6 +80,7 @@ resource "aws_ecs_cluster" "tfcluster" {
 
 resource "aws_ecs_task_definition" "mytask" {
   family                = "mytask"
+  network_mode          = "awsvpc"
   container_definitions = "${file("task-definitions/mytask.json")}"
 }
 
@@ -88,6 +89,9 @@ resource "aws_ecs_service" "nginx" {
   cluster         = "${aws_ecs_cluster.tfcluster.id}"
   task_definition = "${aws_ecs_task_definition.mytask.arn}"
   desired_count   = 1
+  network_configuration = {
+    subnets = ["${aws_subnet.ecs_public_subnet.id}"]
+  }
 }
 
 # EC2 instance
