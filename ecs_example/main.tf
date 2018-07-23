@@ -134,7 +134,7 @@ resource "aws_instance" "ecs_ec2_host_1" {
     instance_type               = "${var.ec2_instance_type}"
     monitoring                  = false
     subnet_id                   = "${aws_subnet.ecs_public_subnet.id}"
-    key_pair_name               = "${var.ec2_key_pair_name}"
+    key_name                    = "${var.ec2_key_name}"
     vpc_security_group_ids      = ["${aws_security_group.ecs_security_group.id}"]
     associate_public_ip_address = true
     source_dest_check           = true

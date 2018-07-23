@@ -48,7 +48,7 @@ variable "ec2_instance_type" {
     default = "t2.micro"
 }
 
-variable "ec2_keypair_name" {
+variable "ec2_key_name" {
     type = "string"
     default = "20180622mac"
 }
