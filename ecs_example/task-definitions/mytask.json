@@ -15,11 +15,12 @@
         "linuxParameters": {
             "initProcessEnabled": true
         },
-        "privileged": false
+        "privileged": false,
+        "environment" : [ { "name" : "NGINX_PORT", "value" : "80" } ]
     },
     {
         "name": "second",
-        "image": "nginx",
+        "image": "ishentras/simpleweb",
         "cpu": 10,
         "memory": 256,
         "portMappings": [
@@ -33,6 +34,7 @@
         "linuxParameters": {
             "initProcessEnabled": true
         },
-        "privileged": false
+        "privileged": false,
+        "environment" : [ { "name" : "NGINX_PORT", "value" : "8080" } ]
     }
 ]
