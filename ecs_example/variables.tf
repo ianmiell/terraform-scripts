@@ -45,7 +45,7 @@ variable "ecs_ec2_ami" {
 
 variable "ec2_instance_type" {
     type = "string"
-    default = "t2.micro"
+    default = "t2.small"
 }
 
 variable "ec2_key_name" {
