@@ -1,3 +1,3 @@
 output "ip_address" {
-  value = "${aws_eip.ecs_cluster_eip.public_ip}"
+  value = "${aws_instance.ecs_ec2_host_1.public_ip}"
 }
