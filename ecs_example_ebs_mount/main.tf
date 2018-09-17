@@ -82,8 +82,8 @@ resource "aws_ecs_task_definition" "mytask" {
   family                = "mytask"
   network_mode          = "awsvpc"
   volume {
-    name: "task1mount"
-    host_path: "/opt/mount1"
+    name = "task1mount"
+    host_path = "/opt/mount1"
   }
   container_definitions = "${file("task-definitions/mytask.json")}"
 }
@@ -164,8 +164,8 @@ resource "aws_instance" "ecs_ec2_host_1" {
 echo "ECS_CLUSTER=${aws_ecs_cluster.tfcluster.name}" >> /etc/ecs/ecs.config
 mkfs -t ext4 /dev/sdh
 mkdir /opt/mount1
-mount /dev/xvdg /opt/mount1
-echo /dev/xvdg  /opt/mount1 ext4 defaults,nofail 0 2 >> /etc/fstab
+mount /dev/sdh /opt/mount1
+echo /dev/sdh  /opt/mount1 ext4 defaults,nofail 0 2 >> /etc/fstab
 USER_DATA
 }
 
