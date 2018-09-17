@@ -160,12 +160,9 @@ resource "aws_instance" "ecs_ec2_host_1" {
     }
     tags {}
     user_data = <<USER_DATA
-#!/bin/bash
+#!/bin/bash -x
 echo "ECS_CLUSTER=${aws_ecs_cluster.tfcluster.name}" >> /etc/ecs/ecs.config
-mkfs -t ext4 /dev/sdh
-mkdir /opt/mount1
-mount /dev/sdh /opt/mount1
-echo /dev/sdh  /opt/mount1 ext4 defaults,nofail 0 2 >> /etc/fstab
+nohup sleep 60 && mkfs -t ext4 /dev/sdh && mkdir /opt/mount1 && mount /dev/sdh /opt/mount1 && echo /dev/sdh  /opt/mount1 ext4 defaults,nofail 0 2 >> /etc/fstab &
 USER_DATA
 }
 
