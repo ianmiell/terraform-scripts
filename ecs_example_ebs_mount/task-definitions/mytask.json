@@ -1,37 +1,36 @@
 [
-  "volumes": [
     {
-      "name": "task1mount",
-      "host": {
-        "sourcePath": "/opt/mount1"
-      }
-    }
-  ],
-  "containerDefinitions": [
-    {
-        "name": "first",
-        "image": "nginx",
-        "cpu": 10,
-        "memory": 256,
-        "portMappings": [
-            {
-                "containerPort": 80,
-                "hostPort": 80,
-                "protocol": "tcp"
-            }
-        ],
-        "essential": true,
-        "linuxParameters": {
-            "initProcessEnabled": true
-        },
-        "privileged": false,
-        "environment" : [ { "name" : "NGINX_PORT", "value" : "80" } ],
-        "mountPoints": [
-          {
-            "sourceVolume": "task1mount",
-            "containerPath": "/path/to/mount1"
+      "volumes": [
+        {
+          "name": "task1mount",
+          "host": {
+            "sourcePath": "/opt/mount1"
           }
-        ]
+        }
+      ],
+      "name": "first",
+      "image": "nginx",
+      "cpu": 10,
+      "memory": 256,
+      "portMappings": [
+          {
+              "containerPort": 80,
+              "hostPort": 80,
+              "protocol": "tcp"
+          }
+      ],
+      "essential": true,
+      "linuxParameters": {
+          "initProcessEnabled": true
+      },
+      "privileged": false,
+      "environment" : [ { "name" : "NGINX_PORT", "value" : "80" } ],
+      "mountPoints": [
+        {
+          "sourceVolume": "task1mount",
+          "containerPath": "/path/to/mount1"
+        }
+      ]
     },
     {
         "name": "second",
@@ -52,5 +51,4 @@
         "privileged": false,
         "environment" : [ { "name" : "NGINX_PORT", "value" : "8080" } ]
     }
-  ]
 ]
