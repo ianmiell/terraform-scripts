@@ -81,6 +81,10 @@ resource "aws_ecs_cluster" "tfcluster" {
 resource "aws_ecs_task_definition" "mytask" {
   family                = "mytask"
   network_mode          = "awsvpc"
+  volume {
+    name: "task1mount"
+    host_path: "/opt/mount1"
+  }
   container_definitions = "${file("task-definitions/mytask.json")}"
 }
 

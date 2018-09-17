@@ -1,13 +1,5 @@
 [
     {
-      "volumes": [
-        {
-          "name": "task1mount",
-          "host": {
-            "sourcePath": "/opt/mount1"
-          }
-        }
-      ],
       "name": "first",
       "image": "nginx",
       "cpu": 10,

@@ -50,5 +50,5 @@ variable "ec2_instance_type" {
 
 variable "ec2_key_name" {
     type = "string"
-    default = "20180622mac"
+    default = "mc20180917"
 }
